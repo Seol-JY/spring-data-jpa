@@ -19,6 +19,8 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.Query;
 import jakarta.persistence.Tuple;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.springframework.core.annotation.MergedAnnotation;
 import org.springframework.core.annotation.MergedAnnotations;
 import org.springframework.data.domain.Pageable;
@@ -44,6 +46,8 @@ import org.springframework.util.ObjectUtils;
  */
 final class NativeJpaQuery extends AbstractStringBasedJpaQuery {
 
+	private static final Log LOG = LogFactory.getLog(NativeJpaQuery.class);
+
 	private final @Nullable String sqlResultSetMapping;
 
 	private final boolean queryForEntity;
@@ -62,6 +66,12 @@ final class NativeJpaQuery extends AbstractStringBasedJpaQuery {
 			QueryRewriter rewriter, ValueExpressionDelegate valueExpressionDelegate) {
 
 		super(method, em, queryString, countQueryString, rewriter, valueExpressionDelegate);
+
+		if (method.getParameters().hasPageableParameter()) {
+			LOG.warn(String.format(
+					"Finder method %s uses native query with Pageable parameter; Sorting delivered via this Pageable will not be applied",
+					method));
+		}
 
 		MergedAnnotations annotations = MergedAnnotations.from(method.getMethod());
 		MergedAnnotation<NativeQuery> annotation = annotations.get(NativeQuery.class);
